@@ -1,0 +1,195 @@
+# Memory Game Application Monitoring Guide
+
+This document provides detailed information about the monitoring and observability solution implemented for the Memory Game application.
+
+## Table of Contents
+
+- [Monitoring Architecture](#monitoring-architecture)
+- [Metrics Collection](#metrics-collection)
+- [Log Aggregation](#log-aggregation)
+- [SLIs, SLOs, and SLAs](#slis-slos-and-slas)
+- [Dashboards](#dashboards)
+- [Alerting](#alerting)
+- [Troubleshooting](#troubleshooting)
+
+## Monitoring Architecture
+
+The monitoring stack consists of the following components:
+
+1. **Prometheus** - Time-series database for metrics
+2. **Grafana** - Visualization and dashboarding
+3. **Loki** - Log aggregation system
+4. **Promtail** - Log collection agent
+5. **kube-state-metrics** - Kubernetes state metrics exporter
+6. **node-exporter** - Node-level metrics exporter
+7. **AlertManager** - Alert handling and notification
+
+![Monitoring Architecture](https://example.com/monitoring-architecture.png)
+
+## Metrics Collection
+
+### System Metrics
+
+System-level metrics are collected using:
+
+- **node-exporter** - Collects CPU, memory, disk, and network metrics from each node
+- **kube-state-metrics** - Collects Kubernetes object metrics (deployments, pods, etc.)
+- **cAdvisor** (built into kubelet) - Collects container metrics
+
+### Application Metrics
+
+The backend application is instrumented to expose the following custom metrics:
+
+- `http_requests_total` - Total number of HTTP requests (labels: method, route, status_code)
+- `http_request_duration_ms` - HTTP request duration in milliseconds (labels: method, route)
+
+These metrics are exposed at the `/metrics` endpoint and are automatically scraped by Prometheus.
+
+## Log Aggregation
+
+Logs are collected and aggregated using:
+
+- **Promtail** - Runs as a DaemonSet on each node to collect container logs
+- **Loki** - Stores and indexes logs for efficient querying
+
+### Log Sources
+
+1. **Application Logs** - Logs from the frontend, backend, and database containers
+2. **Kubernetes Logs** - Logs from Kubernetes system components
+3. **Node Logs** - System logs from each node
+
+## SLIs, SLOs, and SLAs
+
+### Service Level Indicators (SLIs)
+
+The following SLIs are tracked for the Memory Game application:
+
+1. **Availability** - Percentage of successful HTTP requests
+   - Formula: `100 * (1 - sum(rate(http_requests_total{status_code=~"5.."}[30m])) / sum(rate(http_requests_total[30m])))`
+   - Target: > 99.9%
+
+2. **Latency** - Response time for HTTP requests
+   - Formula: `histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le))`
+   - Target: < 300ms (95th percentile)
+
+3. **Error Rate** - Percentage of HTTP requests that result in 5xx errors
+   - Formula: `sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))`
+   - Target: < 0.1%
+
+4. **Saturation** - Resource utilization
+   - CPU Formula: `sum(rate(container_cpu_usage_seconds_total{namespace="memory-game"}[5m])) / sum(kube_pod_container_resource_limits{namespace="memory-game", resource="cpu"})`
+   - Memory Formula: `sum(container_memory_working_set_bytes{namespace="memory-game"}) / sum(kube_pod_container_resource_limits{namespace="memory-game", resource="memory"})`
+   - Target: < 80%
+
+### Service Level Objectives (SLOs)
+
+Based on the SLIs, the following SLOs are defined:
+
+1. **Availability SLO**
+   - 99.9% of requests will be successful (non-5xx) over a 30-day period
+   - Error budget: 43.2 minutes of downtime per 30 days
+
+2. **Latency SLO**
+   - 95% of requests will complete in < 300ms over a 30-day period
+
+3. **Resource SLO**
+   - CPU and memory usage will remain below 80% of allocated limits
+
+### Service Level Agreements (SLAs)
+
+For production use, the following SLAs could be established:
+
+1. **Availability SLA**
+   - 99.5% uptime guaranteed per month
+   - Maximum 3.6 hours of downtime per month
+
+2. **Performance SLA**
+   - 95% of requests will complete in < 500ms
+   - Maximum 1% error rate over a month
+
+3. **Support SLA**
+   - Critical issues: Response within 1 hour, resolution within 4 hours
+   - Non-critical issues: Response within 24 hours, resolution within 48 hours
+
+## Dashboards
+
+### 1. Kubernetes Cluster Dashboard
+
+Provides an overview of the Kubernetes cluster:
+
+- Node CPU and memory usage
+- Pod status and counts by namespace
+- Container resource usage
+
+### 2. Memory Game Dashboard
+
+Provides detailed metrics for the Memory Game application:
+
+- Request rate by endpoint
+- Response time by endpoint
+- Error rate by endpoint
+- Database query performance
+
+### 3. SLI/SLO Dashboard
+
+Tracks the SLIs and SLOs for the Memory Game application:
+
+- Availability gauge with SLO threshold
+- Latency gauge with SLO threshold
+- Error rate over time with SLO threshold
+- Resource saturation over time with SLO threshold
+
+## Alerting
+
+Alerts are configured in Prometheus and managed by AlertManager. The following alerts are defined:
+
+1. **HighErrorRate** - Triggers when error rate exceeds 1% for 2 minutes
+2. **HighLatency** - Triggers when p95 latency exceeds 300ms for 2 minutes
+3. **PodRestartingTooMuch** - Triggers when pods restart more than 3 times in 15 minutes
+4. **PodNotRunning** - Triggers when pods are in Failed, Unknown, or Pending state for 5 minutes
+5. **HighCPUUsage** - Triggers when CPU usage exceeds 80% for 5 minutes
+6. **HighMemoryUsage** - Triggers when memory usage exceeds 80% for 5 minutes
+7. **ServiceUnavailable** - Triggers when no ready pods are found for a service
+8. **DatabaseConnectionIssue** - Triggers when database-related endpoints return errors
+
+### Notification Channels
+
+Alerts can be sent to the following channels:
+
+- Email
+- Slack
+- PagerDuty (for critical alerts)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Prometheus not scraping metrics**
+   - Check Prometheus targets in the UI
+   - Verify service annotations and labels
+   - Check network policies and firewall rules
+
+2. **Loki not receiving logs**
+   - Check Promtail pods are running on all nodes
+   - Verify Promtail configuration
+   - Check Loki storage and resource limits
+
+3. **Grafana dashboards not loading**
+   - Verify data source configuration
+   - Check Grafana service and deployment
+   - Inspect browser console for errors
+
+### Useful Commands
+
+```bash
+# Check Prometheus targets
+kubectl port-forward svc/prometheus -n monitoring 9090:9090
+# Then open http://localhost:9090/targets
+
+# View Promtail logs
+kubectl logs -n monitoring -l app=promtail
+
+# Check AlertManager status
+kubectl port-forward svc/alertmanager -n monitoring 9093:9093
+# Then open http://localhost:9093
+```

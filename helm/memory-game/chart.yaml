@@ -1,0 +1,16 @@
+apiVersion: v2
+name: memory-game
+description: A Helm chart for Memory Game application with monitoring
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - memory-game
+  - monitoring
+  - prometheus
+  - grafana
+  - loki
+home: https://github.com/yourusername/memory-game-k8s-monitoring
+maintainers:
+  - name: Osomudeya Zudonu
+    email: talk2osomudeya@gmail.com
