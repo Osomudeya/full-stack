@@ -1,4 +1,3 @@
-# Save this as loki.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,10 +6,10 @@ metadata:
 data:
   loki.yaml: |
     auth_enabled: false
-    
+
     server:
       http_listen_port: 3100
-    
+
     ingester:
       lifecycler:
         address: 127.0.0.1
@@ -23,7 +22,7 @@ data:
       wal:
         enabled: true
         dir: /data/wal
-    
+
     schema_config:
       configs:
         - from: 2020-05-15
@@ -33,13 +32,20 @@ data:
           index:
             prefix: index_
             period: 168h
-    
+
     storage_config:
       boltdb:
         directory: /data/index
       filesystem:
         directory: /data/chunks
-    
+
+    chunk_store_config:
+      max_look_back_period: 0s
+
+    table_manager:
+      retention_deletes_enabled: false
+      retention_period: 0s
+
     limits_config:
       enforce_metric_name: false
       reject_old_samples: true
@@ -60,13 +66,12 @@ spec:
       labels:
         app: loki
     spec:
-      securityContext:
-        fsGroup: 10001
-        runAsUser: 10001
       initContainers:
-        - name: init-chmod-data
+        - name: init-permissions
           image: busybox:1.35
-          command: ["sh", "-c", "mkdir -p /data/chunks /data/index /data/wal && chmod -R 777 /data"]
+          securityContext:
+            runAsUser: 0
+          command: ["sh", "-c", "mkdir -p /data/chunks /data/index /data/wal && chmod -R 775 /data"]
           volumeMounts:
             - name: data
               mountPath: /data
@@ -87,14 +92,18 @@ spec:
             httpGet:
               path: /ready
               port: 3100
-            initialDelaySeconds: 45
+            initialDelaySeconds: 60
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /ready
               port: 3100
-            initialDelaySeconds: 45
+            initialDelaySeconds: 60
             periodSeconds: 10
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
       volumes:
         - name: config
           configMap:
@@ -111,143 +120,6 @@ spec:
   ports:
     - port: 3100
       targetPort: 3100
+      name: http
   selector:
     app: loki
-
-# apiVersion: v1
-# kind: ConfigMap
-# metadata:
-#   name: loki-config
-#   namespace: monitoring
-# data:
-#   loki-config.yaml: |
-#     auth_enabled: false
-    
-#     server:
-#       http_listen_port: 3100
-#       log_level: info
-    
-#     ingester:
-#       lifecycler:
-#         address: 127.0.0.1
-#         ring:
-#           kvstore:
-#             store: inmemory
-#           replication_factor: 1
-#         final_sleep: 0s
-#       chunk_idle_period: 5m
-#       chunk_retain_period: 30s
-    
-#     schema_config:
-#       configs:
-#         - from: 2020-05-15
-#           store: boltdb
-#           object_store: filesystem
-#           schema: v11
-#           index:
-#             prefix: index_
-#             period: 168h
-    
-#     storage_config:
-#       boltdb:
-#         directory: /tmp/loki/index
-#       filesystem:
-#         directory: /tmp/loki/chunks
-    
-#     limits_config:
-#       enforce_metric_name: false
-#       reject_old_samples: true
-#       reject_old_samples_max_age: 168h
-    
-#     chunk_store_config:
-#       max_look_back_period: 0s
-    
-#     table_manager:
-#       retention_deletes_enabled: false
-#       retention_period: 0s
-# ---
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: loki
-#   namespace: monitoring
-#   labels:
-#     app: loki
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: loki
-#   template:
-#     metadata:
-#       labels:
-#         app: loki
-#     spec:
-#       containers:
-#         - name: loki
-#           image: grafana/loki:2.8.2
-#           imagePullPolicy: IfNotPresent
-#           args:
-#             - -config.file=/etc/loki/loki-config.yaml
-#           ports:
-#             - containerPort: 3100
-#               name: http
-#           volumeMounts:
-#             - name: config-volume
-#               mountPath: /etc/loki
-#             - name: data-volume
-#               mountPath: /tmp/loki
-#           readinessProbe:
-#             httpGet:
-#               path: /ready
-#               port: 3100
-#             initialDelaySeconds: 15
-#             timeoutSeconds: 1
-#           livenessProbe:
-#             httpGet:
-#               path: /ready
-#               port: 3100
-#             initialDelaySeconds: 45
-#             timeoutSeconds: 1
-#           resources:
-#             requests:
-#               cpu: "100m"
-#               memory: "256Mi"
-#             limits:
-#               cpu: "200m"
-#               memory: "512Mi"
-#       volumes:
-#         - name: config-volume
-#           configMap:
-#             name: loki-config
-#         - name: data-volume
-#           emptyDir: {}
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: loki
-#   namespace: monitoring
-#   labels:
-#     app: loki
-# spec:
-#   ports:
-#     - port: 3100
-#       targetPort: 3100
-#       name: http
-#   selector:
-#     app: loki
-#   type: ClusterIP
-
-# # ---
-# # apiVersion: v1
-# # kind: PersistentVolumeClaim
-# # metadata:
-# #   name: loki-data
-# #   namespace: monitoring
-# # spec:
-# #   accessModes:
-# #     - ReadWriteOnce
-# #   resources:
-# #     requests:
-# #       storage: 10Gi
