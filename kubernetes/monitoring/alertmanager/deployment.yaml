@@ -1,139 +1,139 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  alertmanager.yml: |
-    global:
-      resolve_timeout: 5m
-      # Slack configuration - uncomment and configure in production
-      # slack_api_url: 'https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX'
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: alertmanager-config
+#   namespace: monitoring
+# data:
+#   alertmanager.yml: |
+#     global:
+#       resolve_timeout: 5m
+#       # Slack configuration - uncomment and configure in production
+#       # slack_api_url: 'https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX'
 
-    # The root route on which each incoming alert enters
-    route:
-      # The root route must not have any matchers as it is the entry point for all alerts
-      group_by: ['alertname', 'cluster', 'service']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 4h
-      receiver: 'default-receiver'
-      routes:
-      - match:
-          severity: critical
-        receiver: 'critical-receiver'
-        continue: true
-      - match:
-          severity: warning
-        receiver: 'warning-receiver'
-        continue: true
+#     # The root route on which each incoming alert enters
+#     route:
+#       # The root route must not have any matchers as it is the entry point for all alerts
+#       group_by: ['alertname', 'cluster', 'service']
+#       group_wait: 30s
+#       group_interval: 5m
+#       repeat_interval: 4h
+#       receiver: 'default-receiver'
+#       routes:
+#       - match:
+#           severity: critical
+#         receiver: 'critical-receiver'
+#         continue: true
+#       - match:
+#           severity: warning
+#         receiver: 'warning-receiver'
+#         continue: true
 
-    receivers:
-    - name: 'default-receiver'
-      # Uncomment for email alerts in production
-      # email_configs:
-      # - to: 'alerts@example.com'
-      #   from: 'alertmanager@example.com'
-      #   smarthost: smtp.example.com:587
-      #   auth_username: 'alertmanager'
-      #   auth_password: 'password'
-      #   require_tls: true
+#     receivers:
+#     - name: 'default-receiver'
+#       # Uncomment for email alerts in production
+#       # email_configs:
+#       # - to: 'alerts@example.com'
+#       #   from: 'alertmanager@example.com'
+#       #   smarthost: smtp.example.com:587
+#       #   auth_username: 'alertmanager'
+#       #   auth_password: 'password'
+#       #   require_tls: true
     
-    - name: 'critical-receiver'
-      # Uncomment for Slack alerts in production
-      # slack_configs:
-      # - channel: '#alerts-critical'
-      #   text: |-
-      #     {{ range .Alerts }}{{ .Annotations.description }}
-      #     {{ end }}
-      #   send_resolved: true
+#     - name: 'critical-receiver'
+#       # Uncomment for Slack alerts in production
+#       # slack_configs:
+#       # - channel: '#alerts-critical'
+#       #   text: |-
+#       #     {{ range .Alerts }}{{ .Annotations.description }}
+#       #     {{ end }}
+#       #   send_resolved: true
     
-    - name: 'warning-receiver'
-      # Uncomment for Slack alerts in production
-      # slack_configs:
-      # - channel: '#alerts-warnings'
-      #   text: |-
-      #     {{ range .Alerts }}{{ .Annotations.description }}
-      #     {{ end }}
-      #   send_resolved: true
+#     - name: 'warning-receiver'
+#       # Uncomment for Slack alerts in production
+#       # slack_configs:
+#       # - channel: '#alerts-warnings'
+#       #   text: |-
+#       #     {{ range .Alerts }}{{ .Annotations.description }}
+#       #     {{ end }}
+#       #   send_resolved: true
 
-    inhibit_rules:
-    - source_match:
-        severity: 'critical'
-      target_match:
-        severity: 'warning'
-      equal: ['alertname', 'cluster', 'service']
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: alertmanager
-  namespace: monitoring
-  labels:
-    app: alertmanager
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: alertmanager
-  template:
-    metadata:
-      labels:
-        app: alertmanager
-    spec:
-      containers:
-        - name: alertmanager
-          image: prom/alertmanager:v0.25.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--config.file=/etc/alertmanager/alertmanager.yml"
-            - "--storage.path=/alertmanager"
-          ports:
-            - containerPort: 9093
-              name: http
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/alertmanager
-            - name: storage-volume
-              mountPath: /alertmanager
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 9093
-            initialDelaySeconds: 30
-            periodSeconds: 15
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9093
-            initialDelaySeconds: 30
-            periodSeconds: 15
-          resources:
-            requests:
-              cpu: "50m"
-              memory: "64Mi"
-            limits:
-              cpu: "100m"
-              memory: "128Mi"
-      volumes:
-        - name: config-volume
-          configMap:
-            name: alertmanager-config
-        - name: storage-volume
-          emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: alertmanager
-  namespace: monitoring
-  labels:
-    app: alertmanager
-spec:
-  ports:
-    - port: 9093
-      targetPort: 9093
-      name: http
-  selector:
-    app: alertmanager
-  type: ClusterIP
+#     inhibit_rules:
+#     - source_match:
+#         severity: 'critical'
+#       target_match:
+#         severity: 'warning'
+#       equal: ['alertname', 'cluster', 'service']
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: alertmanager
+#   namespace: monitoring
+#   labels:
+#     app: alertmanager
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: alertmanager
+#   template:
+#     metadata:
+#       labels:
+#         app: alertmanager
+#     spec:
+#       containers:
+#         - name: alertmanager
+#           image: prom/alertmanager:v0.25.0
+#           imagePullPolicy: IfNotPresent
+#           args:
+#             - "--config.file=/etc/alertmanager/alertmanager.yml"
+#             - "--storage.path=/alertmanager"
+#           ports:
+#             - containerPort: 9093
+#               name: http
+#           volumeMounts:
+#             - name: config-volume
+#               mountPath: /etc/alertmanager
+#             - name: storage-volume
+#               mountPath: /alertmanager
+#           readinessProbe:
+#             httpGet:
+#               path: /-/ready
+#               port: 9093
+#             initialDelaySeconds: 30
+#             periodSeconds: 15
+#           livenessProbe:
+#             httpGet:
+#               path: /-/healthy
+#               port: 9093
+#             initialDelaySeconds: 30
+#             periodSeconds: 15
+#           resources:
+#             requests:
+#               cpu: "50m"
+#               memory: "64Mi"
+#             limits:
+#               cpu: "100m"
+#               memory: "128Mi"
+#       volumes:
+#         - name: config-volume
+#           configMap:
+#             name: alertmanager-config
+#         - name: storage-volume
+#           emptyDir: {}
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: alertmanager
+#   namespace: monitoring
+#   labels:
+#     app: alertmanager
+# spec:
+#   ports:
+#     - port: 9093
+#       targetPort: 9093
+#       name: http
+#   selector:
+#     app: alertmanager
+#   type: ClusterIP

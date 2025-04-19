@@ -1,0 +1,11 @@
+# # Save this to loki-values.yaml
+# loki:
+#   enabled: true
+#   persistence:
+#     enabled: true
+#     size: 10Gi
+# promtail:
+#   enabled: true
+#   config:
+#     clients:
+#       - url: http://loki-stack:3100/loki/api/v1/push

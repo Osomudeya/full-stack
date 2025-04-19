@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: memory-game-frontend:latest
-          imagePullPolicy: IfNotPresent
+          image: acrname.azurecr.io/memory-game-frontend:latest    # memory-game-frontend:latest (keep for local deplyment with minikube)
+          pullPolicy: Always
           ports:
             - containerPort: 80
               name: http
@@ -50,13 +50,11 @@ kind: Service
 metadata:
   name: frontend
   namespace: memory-game
-  labels:
-    app: frontend
 spec:
   ports:
     - port: 80
       targetPort: 80
-      name: http
+      protocol: TCP    #for minikube deployment (remove tcp)
   selector:
     app: frontend
-  type: ClusterIP
+  type: LoadBalancer  #for minikube deployment (change this to cluster IP)

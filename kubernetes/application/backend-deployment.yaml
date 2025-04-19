@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: memory-game-backend:latest
+          image: yourregistry.azurecr.io/memory-game-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001

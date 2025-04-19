@@ -1,0 +1,62 @@
+# AKS-optimized Prometheus Stack values
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: managed-premium  # Azure managed disk
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+  service:
+    type: ClusterIP
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: managed-premium  # Azure managed disk
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+  service:
+    type: ClusterIP
+
+grafana:
+  persistence:
+    enabled: true
+    storageClassName: managed-premium
+    size: 10Gi
+  service:
+    type: ClusterIP
+  
+  # Azure-specific datasources
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki-stack:3100
+      access: proxy
+    - name: Azure Monitor
+      type: grafana-azure-monitor-datasource
+      jsonData:
+        azureAuthType: msi
+      
+  # Production resource settings
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 750Mi
+
+# Use managed node groups with taints for monitoring
+nodeSelector:
+  kubernetes.azure.com/mode: system
+
+# Network policies
+networkPolicy:
+  enabled: true

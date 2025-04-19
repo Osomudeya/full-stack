@@ -1,0 +1,48 @@
+loki:
+  persistence:
+    enabled: true
+    storageClassName: managed-premium
+    size: 50Gi
+  
+  service:
+    type: ClusterIP
+  
+  # Production resource settings
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1.5Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  
+  # Azure optimized config
+  config:
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: azure
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+promtail:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  
+  # Must run on all nodes
+  tolerations:
+    - effect: NoSchedule
+      operator: Exists
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 200m
+      memory: 300Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi

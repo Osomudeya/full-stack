@@ -1,0 +1,24 @@
+# # Save this to prometheus-values.yaml
+# alertmanager:
+#   enabled: true
+#   ingress:
+#     enabled: true
+#     hosts:
+#       - alertmanager.monitoring.local
+# grafana:
+#   enabled: true
+#   adminPassword: admin
+#   ingress:
+#     enabled: true
+#     hosts:
+#       - grafana.monitoring.local
+#   additionalDataSources:
+#     - name: Loki
+#       type: loki
+#       url: http://loki-stack:3100
+#       access: proxy
+# prometheus:
+#   ingress:
+#     enabled: true
+#     hosts:
+#       - prometheus.monitoring.local
