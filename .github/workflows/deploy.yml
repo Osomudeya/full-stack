@@ -21,13 +21,12 @@ env:
   FRONTEND_DEPLOYMENT_NAME: frontend
   IMAGE_TAG: ${{ github.sha }}
   NAMESPACE: memory-game
-  BASTION_HOST: ${{ secrets.JUMPBOX_IP }}
+  BASTION_HOST: "104.45.53.168"  # Hardcoded IP from your output
   BASTION_USER: azureuser
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
   KUBECONFIG: ~/.kube/config
-  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
-  ACR_NAME: ${{ secrets.ACR_NAME }}
-
+  ACR_LOGIN_SERVER: "appacr94.azurecr.io"  # Hardcoded from your output
+  ACR_NAME: "appacr94"  # Hardcoded from your output
 
 jobs:
   build-push-deploy:
@@ -70,6 +69,7 @@ jobs:
         host: ${{ env.BASTION_HOST }}
         username: ${{ env.BASTION_USER }}
         password: ${{ env.BASTION_PASSWORD }}
+        port: 22
         script: |
           rm -rf /tmp/application
           rm -rf /tmp/run-deploy.sh
@@ -97,6 +97,111 @@ jobs:
         host: ${{ env.BASTION_HOST }}
         username: ${{ env.BASTION_USER }}
         password: ${{ env.BASTION_PASSWORD }}
+        port: 22
         envs: ACR_LOGIN_SERVER,IMAGE_TAG,BACKEND_DEPLOYMENT_NAME,FRONTEND_DEPLOYMENT_NAME,BACKEND_IMAGE_NAME,FRONTEND_IMAGE_NAME,NAMESPACE
         script: |
           bash -x /tmp/run-deploy.sh
+
+
+# name: Build and Deploy Backend + Frontend to Azure AKS
+
+# on:
+#   # pull_request:
+#   #   branches:
+#   #     - main
+#   #   types: [closed]
+#   workflow_dispatch:
+#     inputs:
+#       reason:
+#         description: 'Reason for running the workflow'
+#         required: false
+#         type: string
+
+# env:
+#   AKS_CLUSTER_NAME: ${{ secrets.AKS_CLUSTER_NAME }}
+#   AKS_RESOURCE_GROUP: ${{ secrets.AKS_RESOURCE_GROUP }}
+#   BACKEND_IMAGE_NAME: memory-game-backend
+#   FRONTEND_IMAGE_NAME: memory-game-frontend
+#   BACKEND_DEPLOYMENT_NAME: backend
+#   FRONTEND_DEPLOYMENT_NAME: frontend
+#   IMAGE_TAG: ${{ github.sha }}
+#   NAMESPACE: memory-game
+#   BASTION_HOST: ${{ secrets.JUMPBOX_IP }}
+#   BASTION_USER: azureuser
+#   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
+#   KUBECONFIG: ~/.kube/config
+#   ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+#   ACR_NAME: ${{ secrets.ACR_NAME }}
+
+
+# jobs:
+#   build-push-deploy:
+#     # if: github.event.pull_request.merged == true
+#     name: Build, Push, and Deploy Backend + Frontend
+#     runs-on: ubuntu-latest
+#     environment: development
+
+#     steps:
+#     - name: Checkout Code
+#       uses: actions/checkout@v3
+
+#     - name: Log in to Azure
+#       uses: azure/login@v1
+#       with:
+#         creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+#     - name: Log in to ACR
+#       run: |
+#         az acr login --name ${{ env.ACR_NAME }}
+
+#     - name: Build and Push Backend Image
+#       run: |
+#         docker build -f ./application/backend/Dockerfile -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./application/backend
+#         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+#     - name: Build and Push Frontend Image
+#       run: |
+#         docker build -f ./application/frontend/Dockerfile -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./application/frontend
+#         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+#     - name: Install SSH dependencies
+#       run: |
+#         sudo apt-get update
+#         sudo apt-get install -y sshpass
+
+#     - name: Clear old deployment files on Bastion
+#       uses: appleboy/ssh-action@v1.0.3
+#       with:
+#         host: ${{ env.BASTION_HOST }}
+#         username: ${{ env.BASTION_USER }}
+#         password: ${{ env.BASTION_PASSWORD }}
+#         script: |
+#           rm -rf /tmp/application
+#           rm -rf /tmp/run-deploy.sh
+
+#     - name: Copy Kubernetes Manifests to Bastion
+#       run: |
+#         sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/application ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/application
+#         # sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/monitoring ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/monitoring
+
+#     - name: Copy Deployment Script to Bastion
+#       run: |
+#         sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r .github/scripts/run-deploy.sh ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/run-deploy.sh
+
+#     - name: Run Deployment Script on Bastion
+#       uses: appleboy/ssh-action@v1.0.3
+#       env:
+#         ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}
+#         IMAGE_TAG: ${{ env.IMAGE_TAG }}
+#         BACKEND_DEPLOYMENT_NAME: ${{ env.BACKEND_DEPLOYMENT_NAME }}
+#         FRONTEND_DEPLOYMENT_NAME: ${{ env.FRONTEND_DEPLOYMENT_NAME }}
+#         BACKEND_IMAGE_NAME: ${{ env.BACKEND_IMAGE_NAME }}
+#         FRONTEND_IMAGE_NAME: ${{ env.FRONTEND_IMAGE_NAME }}
+#         NAMESPACE: ${{ env.NAMESPACE }}
+#       with:
+#         host: ${{ env.BASTION_HOST }}
+#         username: ${{ env.BASTION_USER }}
+#         password: ${{ env.BASTION_PASSWORD }}
+#         envs: ACR_LOGIN_SERVER,IMAGE_TAG,BACKEND_DEPLOYMENT_NAME,FRONTEND_DEPLOYMENT_NAME,BACKEND_IMAGE_NAME,FRONTEND_IMAGE_NAME,NAMESPACE
+#         script: |
+#           bash -x /tmp/run-deploy.sh
