@@ -51,13 +51,13 @@ jobs:
 
     - name: Build and Push Backend Image
       run: |
-        docker build -f ./application/backend/Dockerfile -t $ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./application/backend
-        docker push $ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+        docker build -f ./application/backend/Dockerfile -t ${{ secrets.ACR_LOGIN_SERVER }}/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./application/backend
+        docker push ${{ secrets.ACR_LOGIN_SERVER }}/$BACKEND_IMAGE_NAME:$IMAGE_TAG
 
     - name: Build and Push Frontend Image
       run: |
-        docker build -f ./application/frontend/Dockerfile -t $ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG ./application/frontend
-        docker push $ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
+        docker build -f ./application/frontend/Dockerfile -t ${{ secrets.ACR_LOGIN_SERVER }}/$FRONTEND_IMAGE_NAME:$IMAGE_TAG ./application/frontend
+        docker push ${{ secrets.ACR_LOGIN_SERVER }}/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
 
     - name: Install SSH dependencies
       run: |
