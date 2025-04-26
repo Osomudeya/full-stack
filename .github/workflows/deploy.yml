@@ -1,15 +1,15 @@
 name: Build and Deploy Backend + Frontend to Azure AKS
 
 on:
-  pull_request:
-    branches:
-      - main
-    types: [closed]
+  # pull_request:
+  #   branches:
+  #     - main
+  #   types: [closed]
   workflow_dispatch:
     inputs:
       reason:
         description: 'Reason for running the workflow'
-        required: true
+        required: false
         type: string
 
 env:
