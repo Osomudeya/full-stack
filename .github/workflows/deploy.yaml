@@ -11,6 +11,10 @@ on:
         required: true
         type: string
 
+permissions:
+  id-token: write
+  contents: read       
+
 env:
   ACR_LOGIN_SERVER: appacr94.azurecr.io
   ACR_NAME: appacr94
