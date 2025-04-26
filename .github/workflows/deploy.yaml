@@ -1,9 +1,9 @@
 name: Build and Deploy Backend + Frontend App to AKS
 
 on:
-  push:
-    branches:
-      - main
+#   push:
+#     branches:
+#       - main
   workflow_dispatch:
     inputs:
       reason:
@@ -16,10 +16,19 @@ env:
   ACR_NAME: appacr94
   BACKEND_IMAGE_NAME: appacr94.azurecr.io/memory-game-backend:latest
   FRONTEND_IMAGE_NAME: appacr94.azurecr.io/memory-game-frontend:latest
+  IMAGE_TAG: $GITHUB_SHA
   BACKEND_DEPLOYMENT_NAME: backend
   FRONTEND_DEPLOYMENT_NAME: frontend
   NAMESPACE: memory-game
   KUBECONFIG: ~/.kube/config
+
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  JUMPBOX_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
+  GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
+
 
 jobs:
   build-push-deploy:
