@@ -21,6 +21,7 @@ env:
   FRONTEND_DEPLOYMENT_NAME: frontend
   IMAGE_TAG: ${{ github.sha }}
   NAMESPACE: memory-game
+  # BASTION_HOST: ${{ secrets.BASTION_HOST }}
   BASTION_HOST: "104.45.53.168"  # Hardcoded IP from your output
   BASTION_USER: azureuser
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
