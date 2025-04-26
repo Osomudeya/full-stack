@@ -1,26 +1,19 @@
 name: Build and Deploy Backend + Frontend App to AKS
 
 on:
-#   push:
-#     branches:
-#       - main
   workflow_dispatch:
     inputs:
       reason:
         description: 'Reason for manual trigger'
-        required: true
+        required: false
         type: string
-
-permissions:
-  id-token: write
-  contents: read       
 
 env:
   ACR_LOGIN_SERVER: appacr94.azurecr.io
   ACR_NAME: appacr94
-  BACKEND_IMAGE_NAME: appacr94.azurecr.io/memory-game-backend:latest
-  FRONTEND_IMAGE_NAME: appacr94.azurecr.io/memory-game-frontend:latest
-  IMAGE_TAG: $GITHUB_SHA
+  IMAGE_TAG: ${{ github.sha }}
+  BACKEND_IMAGE_NAME: memory-game-backend
+  FRONTEND_IMAGE_NAME: memory-game-frontend
   BACKEND_DEPLOYMENT_NAME: backend
   FRONTEND_DEPLOYMENT_NAME: frontend
   NAMESPACE: memory-game
@@ -32,7 +25,6 @@ env:
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   JUMPBOX_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
   GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
-
 
 jobs:
   build-push-deploy:
@@ -49,27 +41,26 @@ jobs:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-    - name: Azure CLI - Login to ACR
+    - name: Login to Azure Container Registry (ACR)
       run: |
-        az acr login --name appacr94
+        az acr login --name $ACR_NAME
 
-    - name: Build and Push Backend Image
-      env:
-        IMAGE_TAG: ${{ github.sha }}
+    - name: Build and Push Backend and Frontend Images
       run: |
-        docker build -t $ACR_NAME/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./application/backend
-        docker push $ACR_NAME/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+        echo "⚡ Building and Pushing Backend Image..."
+        docker build -t $ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./application/backend
+        docker push $ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG
 
-    - name: Build and Push Frontend Image
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ACR_NAME/$FRONTEND_IMAGE_NAME:$IMAGE_TAG ./application/frontend
-        docker push $ACR_NAME/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
+        echo "⚡ Building and Pushing Frontend Image..."
+        docker build -t $ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG ./application/frontend
+        docker push $ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
 
     - name: Install sshpass
-      run: sudo apt-get update && sudo apt-get install -y sshpass
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sshpass
 
     - name: Copy Kubernetes Manifests to Bastion
       env:
@@ -77,6 +68,7 @@ jobs:
         BASTION_USER: azureuser
         BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
       run: |
+        echo "⚡ Copying manifests to Bastion Host..."
         sshpass -p "$BASTION_PASSWORD" scp -o StrictHostKeyChecking=no -r ./kubernetes/application $BASTION_USER@$BASTION_HOST:/tmp/application
 
     - name: Deploy Backend and Frontend from Bastion
@@ -84,23 +76,22 @@ jobs:
         BASTION_HOST: ${{ secrets.JUMPBOX_IP }}
         BASTION_USER: azureuser
         BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
-        ACR_NAME: appacr94.azurecr.io
-        IMAGE_TAG: ${{ github.sha }}
       run: |
+        echo "⚡ Connecting to Bastion and deploying..."
         sshpass -p "$BASTION_PASSWORD" ssh -o StrictHostKeyChecking=no "$BASTION_USER@$BASTION_HOST" bash << EOF
           set -e
-          echo "⚡ Applying secrets, namespace, and deployments..."
+          echo "⚡ Applying Namespace and Secrets..."
           kubectl apply -f /tmp/application/namespace.yaml
           kubectl apply -f /tmp/application/secrets.yaml
 
-          echo "⚡ Updating backend deployment image..."
-          kubectl set image deployment/backend backend=$ACR_NAME/$BACKEND_IMAGE_NAME:$IMAGE_TAG -n $NAMESPACE
+          echo "⚡ Updating Backend Deployment..."
+          kubectl set image deployment/$BACKEND_DEPLOYMENT_NAME backend=$ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG -n $NAMESPACE
 
-          echo "⚡ Updating frontend deployment image..."
-          kubectl set image deployment/frontend frontend=$ACR_NAME/$FRONTEND_IMAGE_NAME:$IMAGE_TAG -n $NAMESPACE
+          echo "⚡ Updating Frontend Deployment..."
+          kubectl set image deployment/$FRONTEND_DEPLOYMENT_NAME frontend=$ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG -n $NAMESPACE
 
           echo "⚡ Applying Ingress..."
           kubectl apply -f /tmp/application/ingress.yaml
 
-          echo "✅ All resources applied successfully!"
+          echo "✅ Deployment successful!"
         EOF
