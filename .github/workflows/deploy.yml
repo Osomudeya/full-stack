@@ -27,7 +27,7 @@ env:
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
   KUBECONFIG: ~/.kube/config
   ACR_LOGIN_SERVER: "appacr94.azurecr.io"  
-  ACR_NAME: "appacr94"
+  ACR_NAME: "appacr94" 
 
 jobs:
   build-push-deploy:

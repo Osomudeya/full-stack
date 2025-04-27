@@ -29,7 +29,7 @@ NAMESPACE="memory-game"
 ACR_LOGIN_SERVER="appacr94.azurecr.io"
 BACKEND_IMAGE_NAME="memory-game-backend"
 FRONTEND_IMAGE_NAME="memory-game-frontend"
-IMAGE_TAG="$GITHUB_SHA"   # Passed in as env from GitHub Actions
+IMAGE_TAG="$IMAGE_TAG"
 
 # Login and configure kubectl
 print_header "Connecting to AKS cluster"
