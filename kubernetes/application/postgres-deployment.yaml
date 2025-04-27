@@ -1,15 +1,16 @@
+# postgres-deployment.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
   name: memory-game
 ---
+# postgres-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-config
   namespace: memory-game
 data:
-  # Initialize DB schema
   schema.sql: |
     CREATE TABLE IF NOT EXISTS scores (
       id SERIAL PRIMARY KEY,
@@ -27,17 +28,6 @@ data:
       ('Player2', 90, 70),
       ('Player3', 85, 75)
     ON CONFLICT DO NOTHING;
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-secrets
-  namespace: memory-game
-type: Opaque
-data:
-  POSTGRES_USER: cG9zdGdyZXM=  # postgres
-  POSTGRES_PASSWORD: cGFzc3dvcmQ=  # password
-  POSTGRES_DB: Z2FtZWRi  # gamedb
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -58,7 +48,6 @@ spec:
       containers:
         - name: postgres
           image: postgres:14-alpine
-          pullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
           envFrom:
@@ -76,6 +65,11 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+          readinessProbe:        
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 10
+            periodSeconds: 10
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:
@@ -87,6 +81,7 @@ spec:
               - key: schema.sql
                 path: schema.sql
 ---
+# postgres-pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -98,8 +93,9 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: managed-premium  # AKS-specific storage class
+  storageClassName: managed-premium
 ---
+# postgres-service.yaml
 apiVersion: v1
 kind: Service
 metadata:

@@ -78,7 +78,7 @@ jobs:
     - name: Copy Kubernetes Manifests to Bastion
       run: |
         sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/application ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/application
-        # sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/monitoring ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/monitoring
+        sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/monitoring ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/monitoring
 
     - name: Copy Deployment Script to Bastion
       run: |

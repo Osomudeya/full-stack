@@ -1,3 +1,4 @@
+# backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,7 +22,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: yourregistry.azurecr.io/memory-game-backend:latest
+          image: appacr94.azurecr.io/memory-game-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001
@@ -56,13 +57,12 @@ spec:
               cpu: "300m"
               memory: "256Mi"
 ---
+# backend-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: backend
   namespace: memory-game
-  labels:
-    app: backend
 spec:
   ports:
     - port: 80
