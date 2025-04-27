@@ -1,14 +1,16 @@
 # 🧠 MEMORY GAME KUBERNETES APP WITH COMPLETE MONITORING STACK
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/yourusername/memory-game-k8s-monitoring/main/assets/memory-game-architecture.png" alt="Memory Game Kubernetes Monitoring Architecture" width="800"/>
-</p>
+<div align="center">
+  <img src="assets/images/fullstack.jpg" alt="memory-game" width="800px" />
 
-<p align="center">
-  <a href="#"><img alt="Downloads" src="https://img.shields.io/github/downloads/yourusername/memory-game-k8s-monitoring/total?style=for-the-badge"></a>
-  <a href="#"><img alt="Stars" src="https://img.shields.io/github/stars/yourusername/memory-game-k8s-monitoring?style=for-the-badge"></a>
-  <a href="#"><img alt="License" src="https://img.shields.io/github/license/yourusername/memory-game-k8s-monitoring?style=for-the-badge"></a>
-</p>
+  <br />
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+  [![GitHub stars](https://img.shields.io/github/stars/Osomudeya/DevOps-Troubleshooting-Toolkit.svg)](https://github.com/Osomudeya/full-stack/stargazers)
+  [![GitHub forks](https://img.shields.io/github/forks/Osomudeya/full-stack.svg)](https://github.com/Osomudeya/full-stack/network/members)
+  [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin&style=social)](https://www.linkedin.com/in/osomudeya-zudonu-17290b124/)
+</div>
 
 ## 📚 Table of Contents
 - [Architecture Overview](#-architecture-overview)
