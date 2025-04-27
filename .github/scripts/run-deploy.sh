@@ -22,8 +22,8 @@ for tool in az kubectl helm; do
 done
 
 # Set variables
-RESOURCE_GROUP="your-resource-group"
-CLUSTER_NAME="your-aks-cluster"
+RESOURCE_GROUP="app-rg"
+CLUSTER_NAME="voteapp-aks"
 ACR_NAME="appacr94"
 NAMESPACE="memory-game"
 ACR_LOGIN_SERVER="appacr94.azurecr.io"

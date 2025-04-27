@@ -22,12 +22,12 @@ env:
   IMAGE_TAG: ${{ github.sha }}
   NAMESPACE: memory-game
   # BASTION_HOST: ${{ secrets.BASTION_HOST }}
-  BASTION_HOST: "104.45.53.168"  # Hardcoded IP from your output
+  BASTION_HOST: ""  
   BASTION_USER: azureuser
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
   KUBECONFIG: ~/.kube/config
-  ACR_LOGIN_SERVER: "appacr94.azurecr.io"  # Hardcoded from your output
-  ACR_NAME: "appacr94"  # Hardcoded from your output
+  ACR_LOGIN_SERVER: "appacr94.azurecr.io"  
+  ACR_NAME: "appacr94"
 
 jobs:
   build-push-deploy:
