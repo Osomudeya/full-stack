@@ -1,7 +1,7 @@
 # 🧠 MEMORY GAME KUBERNETES APP WITH COMPLETE MONITORING STACK
 
 <div align="center">
-  <img src="assets/images/fullstack.jpg" alt="memory-game" width="800px" />
+  <img src="assets/images/fullstack.png" alt="memory-game" width="800px" />
 
   <br />
 
