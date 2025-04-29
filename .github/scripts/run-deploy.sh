@@ -28,8 +28,8 @@ NAMESPACE="memory-game"
 ACR_LOGIN_SERVER="appacr94.azurecr.io"
 BACKEND_IMAGE_NAME="memory-game-backend"
 FRONTEND_IMAGE_NAME="memory-game-frontend"
-IMAGE_TAG="${IMAGE_TAG:-latest}"         # Default to 'latest'
-GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin}"  # Default to 'admin'
+IMAGE_TAG="${IMAGE_TAG:-latest}"         
+GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin}"
 
 # --- Connect to AKS cluster ---
 print_header "Connecting to AKS cluster"
