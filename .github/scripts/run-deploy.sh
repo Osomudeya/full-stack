@@ -36,8 +36,8 @@ print_header "Connecting to AKS cluster"
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
 
 # --- Login to ACR ---
-print_header "Logging into ACR"
-az acr login --name "$ACR_NAME"
+# print_header "Logging into ACR"
+# az acr login --name "$ACR_NAME"
 
 # --- Create namespaces ---
 print_header "Creating application and monitoring namespaces"
