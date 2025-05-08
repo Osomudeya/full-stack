@@ -35,14 +35,22 @@ GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin}"
 print_header "Connecting to AKS cluster"
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
 
-# --- Login to ACR ---
-# print_header "Logging into ACR"
-# az acr login --name "$ACR_NAME"
-
 # --- Create namespaces ---
 print_header "Creating application and monitoring namespaces"
 kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+# --- Pre-process the deployment files to use the correct image tags ---
+print_header "Pre-processing deployment files with correct image tags"
+if [ -f "/tmp/application/backend-deployment.yaml" ]; then
+  sed -i "s|image: $ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:latest|image: $ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG|g" /tmp/application/backend-deployment.yaml
+  echo "✅ Updated backend deployment with image tag: $IMAGE_TAG"
+fi
+
+if [ -f "/tmp/application/frontend-deployment.yaml" ]; then
+  sed -i "s|image: $ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:latest|image: $ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG|g" /tmp/application/frontend-deployment.yaml
+  echo "✅ Updated frontend deployment with image tag: $IMAGE_TAG"
+fi
 
 # --- Deploy application resources ---
 print_header "Applying application Kubernetes manifests"
@@ -51,11 +59,6 @@ kubectl apply -f /tmp/application/postgres-deployment.yaml
 kubectl apply -f /tmp/application/backend-deployment.yaml 
 kubectl apply -f /tmp/application/frontend-deployment.yaml   
 kubectl apply -f /tmp/application/ingress.yaml
-
-# --- Update images in deployments ---
-print_header "Updating backend and frontend deployments with correct image tags"
-kubectl set image deployment/backend backend="$ACR_LOGIN_SERVER/$BACKEND_IMAGE_NAME:$IMAGE_TAG" -n $NAMESPACE || echo "⚠️ Backend deployment might not exist yet"
-kubectl set image deployment/frontend frontend="$ACR_LOGIN_SERVER/$FRONTEND_IMAGE_NAME:$IMAGE_TAG" -n $NAMESPACE || echo "⚠️ Frontend deployment might not exist yet"
 
 # --- Deploy monitoring stack ---
 print_header "Applying monitoring Kubernetes manifests"
@@ -68,7 +71,6 @@ kubectl apply -f /tmp/monitoring/kube-state-metrics/
 kubectl apply -f /tmp/monitoring/alertmanager/
 kubectl apply -f /tmp/monitoring/node-exporter.yaml
 
-# Optionally apply ingress if you later want ingress for Grafana
 # kubectl apply -f /tmp/monitoring/ingress.yaml
 
 # --- Wait for deployments to be ready ---

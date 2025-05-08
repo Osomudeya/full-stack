@@ -1,10 +1,6 @@
-name: Build and Deploy Backend + Frontend to Azure AKS
+name: Build and Deploy to Azure AKS
 
 on:
-  # pull_request:
-  #   branches:
-  #     - main
-  #   types: [closed]
   workflow_dispatch:
     inputs:
       reason:
@@ -21,7 +17,6 @@ env:
   FRONTEND_DEPLOYMENT_NAME: frontend
   IMAGE_TAG: ${{ github.sha }}
   NAMESPACE: memory-game
-  # BASTION_HOST: ${{ secrets.BASTION_HOST }}
   BASTION_HOST: "172.201.163.185"  
   BASTION_USER: azureuser
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
@@ -31,8 +26,7 @@ env:
 
 jobs:
   build-push-deploy:
-    # if: github.event.pull_request.merged == true
-    name: Build, Push, and Deploy Backend + Frontend
+    name: Build, Push, and Deploy
     runs-on: ubuntu-latest
     environment: development
 
@@ -52,12 +46,16 @@ jobs:
     - name: Build and Push Backend Image
       run: |
         docker build -f ./application/backend/Dockerfile -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./application/backend
+        docker tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:latest
         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
     - name: Build and Push Frontend Image
       run: |
         docker build -f ./application/frontend/Dockerfile -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./application/frontend
+        docker tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
 
     - name: Install SSH dependencies
       run: |
@@ -73,6 +71,7 @@ jobs:
         port: 22
         script: |
           rm -rf /tmp/application
+          rm -rf /tmp/monitoring
           rm -rf /tmp/run-deploy.sh
 
     - name: Copy Kubernetes Manifests to Bastion
@@ -104,6 +103,8 @@ jobs:
           bash -x /tmp/run-deploy.sh
 
 
+
+
 # name: Build and Deploy Backend + Frontend to Azure AKS
 
 # on:
@@ -127,13 +128,13 @@ jobs:
 #   FRONTEND_DEPLOYMENT_NAME: frontend
 #   IMAGE_TAG: ${{ github.sha }}
 #   NAMESPACE: memory-game
-#   BASTION_HOST: ${{ secrets.JUMPBOX_IP }}
+#   # BASTION_HOST: ${{ secrets.BASTION_HOST }}
+#   BASTION_HOST: "172.201.163.185"  
 #   BASTION_USER: azureuser
 #   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
 #   KUBECONFIG: ~/.kube/config
-#   ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
-#   ACR_NAME: ${{ secrets.ACR_NAME }}
-
+#   ACR_LOGIN_SERVER: "appacr94.azurecr.io"  
+#   ACR_NAME: "appacr94" 
 
 # jobs:
 #   build-push-deploy:
@@ -176,6 +177,7 @@ jobs:
 #         host: ${{ env.BASTION_HOST }}
 #         username: ${{ env.BASTION_USER }}
 #         password: ${{ env.BASTION_PASSWORD }}
+#         port: 22
 #         script: |
 #           rm -rf /tmp/application
 #           rm -rf /tmp/run-deploy.sh
@@ -183,7 +185,7 @@ jobs:
 #     - name: Copy Kubernetes Manifests to Bastion
 #       run: |
 #         sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/application ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/application
-#         # sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/monitoring ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/monitoring
+#         sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/monitoring ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/monitoring
 
 #     - name: Copy Deployment Script to Bastion
 #       run: |
@@ -203,6 +205,7 @@ jobs:
 #         host: ${{ env.BASTION_HOST }}
 #         username: ${{ env.BASTION_USER }}
 #         password: ${{ env.BASTION_PASSWORD }}
+#         port: 22
 #         envs: ACR_LOGIN_SERVER,IMAGE_TAG,BACKEND_DEPLOYMENT_NAME,FRONTEND_DEPLOYMENT_NAME,BACKEND_IMAGE_NAME,FRONTEND_IMAGE_NAME,NAMESPACE
 #         script: |
 #           bash -x /tmp/run-deploy.sh

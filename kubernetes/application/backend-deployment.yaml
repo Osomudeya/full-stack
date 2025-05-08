@@ -23,7 +23,7 @@ spec:
       containers:
         - name: backend
           image: appacr94.azurecr.io/memory-game-backend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always 
           ports:
             - containerPort: 3001
               name: http
