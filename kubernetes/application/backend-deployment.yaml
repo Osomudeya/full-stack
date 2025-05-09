@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: appacr94.azurecr.io/memory-game-backend:latest
+          image: localhost:5000/memory-game-backend:latest
           imagePullPolicy: Always 
           ports:
             - containerPort: 3001
@@ -67,7 +67,22 @@ spec:
   ports:
     - port: 80
       targetPort: 3001
-      name: http
   selector:
     app: backend
-  type: ClusterIP
+
+
+
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: backend
+#   namespace: memory-game
+# spec:
+#   ports:
+#     - port: 80
+#       targetPort: 3001
+#       name: http
+#   selector:
+#     app: backend
+#   type: ClusterIP

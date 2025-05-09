@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: appacr94.azurecr.io/memory-game-frontend:latest
+          image: localhost:5000/memory-game-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -56,7 +56,24 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-      protocol: TCP
   selector:
     app: frontend
-  type: ClusterIP
+
+
+
+
+
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: frontend
+#   namespace: memory-game
+# spec:
+#   ports:
+#     - port: 80
+#       targetPort: 80
+#       protocol: TCP
+#   selector:
+#     app: frontend
+#   type: ClusterIP
