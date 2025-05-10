@@ -4,6 +4,22 @@ kind: Namespace
 metadata:
   name: memory-game
 ---
+# Create a PersistentVolume first
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
 # postgres-config.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -19,11 +35,9 @@ data:
       time INTEGER,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-
     CREATE INDEX IF NOT EXISTS idx_scores_score ON scores(score DESC);
-
     INSERT INTO scores (player_name, score, time)
-    VALUES 
+    VALUES
       ('Player1', 100, 60),
       ('Player2', 90, 70),
       ('Player3', 85, 75)
@@ -65,7 +79,7 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
-          readinessProbe:        
+          readinessProbe:
             tcpSocket:
               port: 5432
             initialDelaySeconds: 10
@@ -81,19 +95,19 @@ spec:
               - key: schema.sql
                 path: schema.sql
 ---
-# postgres-pvc.yaml
+# postgres-pvc.yaml updated with manual storageClass
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
   namespace: memory-game
 spec:
+  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
-  storageClassName: managed-premium
 ---
 # postgres-service.yaml
 apiVersion: v1
