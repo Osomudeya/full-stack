@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: localhost:5000/memory-game-backend:latest
+          image: 192.168.56.10:30000/memory-game-backend:latest #memory-game-backend:latest
           imagePullPolicy: Always 
           ports:
             - containerPort: 3001
@@ -63,12 +63,16 @@ kind: Service
 metadata:
   name: backend
   namespace: memory-game
+  labels:
+    app: backend
 spec:
-  ports:
-    - port: 80
-      targetPort: 3001
   selector:
     app: backend
+  ports:
+  - port: 80
+    targetPort: 3001
+    name: http
+  type: ClusterIP
 
 
 

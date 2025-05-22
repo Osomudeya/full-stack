@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: localhost:5000/memory-game-frontend:latest
+          image: 192.168.56.10:30000/memory-game-frontend:latest #memory-game-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -52,12 +52,16 @@ kind: Service
 metadata:
   name: frontend
   namespace: memory-game
+  labels:
+    app: frontend
 spec:
-  ports:
-    - port: 80
-      targetPort: 80
   selector:
     app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  type: ClusterIP
 
 
 

@@ -64,7 +64,7 @@ git clone https://github.com/yourusername/memory-game-k8s-monitoring.git
 cd memory-game-k8s-monitoring/application
 
 # Run Docker Compose
-docker-compose up -d
+docker compose up -d #or docker compose up -d 
 
 # Access app
 http://localhost:3000
