@@ -1,4 +1,5 @@
 # frontend-deployment.yaml
+# frontend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +8,7 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 2
+  replicas: 1 #for debugging sake
   selector:
     matchLabels:
       app: frontend
@@ -18,7 +19,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 192.168.56.10:30000/memory-game-frontend:latest #memory-game-frontend:latest
+          image: 192.168.56.10:5000/memory-game-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -62,7 +63,6 @@ spec:
     targetPort: 80
     name: http
   type: ClusterIP
-
 
 
 
