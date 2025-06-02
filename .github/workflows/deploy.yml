@@ -22,7 +22,7 @@ env:
   IMAGE_TAG: ${{ github.sha }}
   NAMESPACE: memory-game
   # BASTION_HOST: ${{ secrets.BASTION_HOST }}
-  BASTION_HOST: "172.201.163.185"  
+  BASTION_HOST: "20.234.218.15"  
   BASTION_USER: azureuser
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
   KUBECONFIG: ~/.kube/config

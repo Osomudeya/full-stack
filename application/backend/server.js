@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 // Database connection
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'postgres',
   database: process.env.DB_NAME || 'gamedb',
   password: process.env.DB_PASSWORD || 'd2h5bm90Z29nZXRhbGlmZS15b3UtZm9vb29vb2w=',
   port: process.env.DB_PORT || 5432,
