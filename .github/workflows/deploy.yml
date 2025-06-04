@@ -13,32 +13,46 @@ on:
         type: string
 
 env:
+  # AKS Configuration
   AKS_CLUSTER_NAME: ${{ secrets.AKS_CLUSTER_NAME }}
   AKS_RESOURCE_GROUP: ${{ secrets.AKS_RESOURCE_GROUP }}
+  
+  # Container Registry Configuration
+  ACR_LOGIN_SERVER: "appacr94.azurecr.io"  
+  ACR_NAME: "appacr94"
+  
+  # Application Configuration
   BACKEND_IMAGE_NAME: memory-game-backend
   FRONTEND_IMAGE_NAME: memory-game-frontend
   BACKEND_DEPLOYMENT_NAME: backend
   FRONTEND_DEPLOYMENT_NAME: frontend
   IMAGE_TAG: ${{ github.sha }}
   NAMESPACE: memory-game
-  # BASTION_HOST: ${{ secrets.BASTION_HOST }}
+  
+  # Bastion Configuration
   BASTION_HOST: "20.234.218.15"  
   BASTION_USER: azureuser
   BASTION_PASSWORD: ${{ secrets.JUMPBOX_PASSWORD }}
   KUBECONFIG: ~/.kube/config
-  ACR_LOGIN_SERVER: "appacr94.azurecr.io"  
-  ACR_NAME: "appacr94" 
+  
+  # 🐘 Database Configuration (Non-sensitive)
+  DB_NAME: "gamedb"
+  DB_APP_USER: "gameapp"
+  PG_SERVER_NAME: ""  # Leave empty for auto-detection, or specify server name
+  
+  # 🔐 Database Secrets (Sensitive - stored in GitHub Secrets)
+  DB_APP_PASSWORD: ${{ secrets.DB_APP_PASSWORD }}
+  PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
 
 jobs:
   build-push-deploy:
-    # if: github.event.pull_request.merged == true
     name: Build, Push, and Deploy Backend + Frontend
     runs-on: ubuntu-latest
     environment: development
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Log in to Azure
       uses: azure/login@v1
@@ -51,13 +65,17 @@ jobs:
 
     - name: Build and Push Backend Image
       run: |
+        echo "🔨 Building backend image with tag: ${{ env.IMAGE_TAG }}"
         docker build -f ./application/backend/Dockerfile -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./application/backend
         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        echo "✅ Backend image pushed successfully"
 
     - name: Build and Push Frontend Image
       run: |
+        echo "🔨 Building frontend image with tag: ${{ env.IMAGE_TAG }}"
         docker build -f ./application/frontend/Dockerfile -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./application/frontend
         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        echo "✅ Frontend image pushed successfully"
 
     - name: Install SSH dependencies
       run: |
@@ -72,36 +90,67 @@ jobs:
         password: ${{ env.BASTION_PASSWORD }}
         port: 22
         script: |
+          echo "🧹 Cleaning up old deployment files..."
           rm -rf /tmp/application
           rm -rf /tmp/run-deploy.sh
+          echo "✅ Cleanup completed"
 
     - name: Copy Kubernetes Manifests to Bastion
       run: |
+        echo "📦 Copying Kubernetes manifests to bastion host..."
         sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/application ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/application
-        sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r ./kubernetes/monitoring ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/monitoring
+        echo "✅ Manifests copied successfully"
 
-    - name: Copy Deployment Script to Bastion
+    - name: Copy Enhanced Deployment Script to Bastion
       run: |
-        sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no -r .github/scripts/run-deploy.sh ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/run-deploy.sh
+        echo "📜 Copying enhanced deployment script to bastion host..."
+        sshpass -p "${{ env.BASTION_PASSWORD }}" scp -o StrictHostKeyChecking=no .github/scripts/run-deploy.sh ${{ env.BASTION_USER }}@${{ env.BASTION_HOST }}:/tmp/run-deploy.sh
+        echo "✅ Deployment script copied successfully"
 
-    - name: Run Deployment Script on Bastion
+    - name: Run Enhanced Deployment Script with Database Configuration
       uses: appleboy/ssh-action@v1.0.3
       env:
+        # Container Configuration
         ACR_LOGIN_SERVER: ${{ env.ACR_LOGIN_SERVER }}
+        ACR_NAME: ${{ env.ACR_NAME }}
         IMAGE_TAG: ${{ env.IMAGE_TAG }}
         BACKEND_DEPLOYMENT_NAME: ${{ env.BACKEND_DEPLOYMENT_NAME }}
         FRONTEND_DEPLOYMENT_NAME: ${{ env.FRONTEND_DEPLOYMENT_NAME }}
         BACKEND_IMAGE_NAME: ${{ env.BACKEND_IMAGE_NAME }}
         FRONTEND_IMAGE_NAME: ${{ env.FRONTEND_IMAGE_NAME }}
         NAMESPACE: ${{ env.NAMESPACE }}
+        
+        # AKS Configuration
+        AKS_CLUSTER_NAME: ${{ env.AKS_CLUSTER_NAME }}
+        AKS_RESOURCE_GROUP: ${{ env.AKS_RESOURCE_GROUP }}
+        
+        # 🐘 Database Configuration
+        DB_NAME: ${{ env.DB_NAME }}
+        DB_APP_USER: ${{ env.DB_APP_USER }}
+        DB_APP_PASSWORD: ${{ env.DB_APP_PASSWORD }}
+        PG_SERVER_NAME: ${{ env.PG_SERVER_NAME }}
+        PG_ADMIN_PASSWORD: ${{ env.PG_ADMIN_PASSWORD }}
+        
       with:
         host: ${{ env.BASTION_HOST }}
         username: ${{ env.BASTION_USER }}
         password: ${{ env.BASTION_PASSWORD }}
         port: 22
-        envs: ACR_LOGIN_SERVER,IMAGE_TAG,BACKEND_DEPLOYMENT_NAME,FRONTEND_DEPLOYMENT_NAME,BACKEND_IMAGE_NAME,FRONTEND_IMAGE_NAME,NAMESPACE
+        envs: ACR_LOGIN_SERVER,ACR_NAME,IMAGE_TAG,BACKEND_DEPLOYMENT_NAME,FRONTEND_DEPLOYMENT_NAME,BACKEND_IMAGE_NAME,FRONTEND_IMAGE_NAME,NAMESPACE,AKS_CLUSTER_NAME,AKS_RESOURCE_GROUP,DB_NAME,DB_APP_USER,DB_APP_PASSWORD,PG_SERVER_NAME,PG_ADMIN_PASSWORD
         script: |
+          echo "🚀 Starting enhanced deployment with Azure PostgreSQL configuration..."
+          chmod +x /tmp/run-deploy.sh
+          
+          # Set PGPASSWORD for non-interactive PostgreSQL operations
+          export PGPASSWORD="$PG_ADMIN_PASSWORD"
+          
           bash -x /tmp/run-deploy.sh
+          
+          echo ""
+          echo "🎯 Final deployment status:"
+          kubectl get pods -n memory-game
+          echo ""
+          echo "✅ Deployment pipeline completed!"
 
 
 # name: Build and Deploy Backend + Frontend to Azure AKS

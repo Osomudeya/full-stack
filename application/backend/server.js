@@ -1,5 +1,5 @@
 const express = require('express');
-const { Pool } = require('pg');
+const { Pool } = require('pg');  // ← Only import once
 const cors = require('cors');
 const promClient = require('prom-client');
 const morgan = require('morgan');
@@ -48,16 +48,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database connection
+// ❌ REMOVE: const { Pool } = require('pg'); // Duplicate import!
+
+// Database connection configuration
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'postgres',
-  database: process.env.DB_NAME || 'gamedb',
-  password: process.env.DB_PASSWORD || 'd2h5bm90Z29nZXRhbGlmZS15b3UtZm9vb29vb2w=',
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT || 5432,
+  ssl: {
+    rejectUnauthorized: false  // Required for Azure PostgreSQL
+  },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000, // Increased timeout for Azure
 });
 
-// Test database connection
+// ❌ REMOVE: module.exports = pool; // This doesn't belong here!
+
+// Add connection error handling
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+// Test database connection on startup
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Database connection error:', err);
@@ -66,9 +82,26 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+// ✅ IMPROVED: Health check endpoint that actually tests database
+app.get('/health', async (req, res) => {
+  try {
+    // Test database connection
+    const result = await pool.query('SELECT NOW() as server_time');
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      server_time: result.rows[0].server_time,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Metrics endpoint for Prometheus
@@ -109,7 +142,16 @@ app.post('/api/scores', async (req, res) => {
   }
 });
 
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  await pool.end();
+  process.exit(0);
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Health check: http://localhost:${port}/health`);
+  console.log(`Metrics: http://localhost:${port}/metrics`);
 });

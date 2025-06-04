@@ -1,4 +1,5 @@
-# backend-deployment.yaml
+# kubernetes/application/backend-deployment.yaml
+# Fixed version with explicit environment variables for better debugging
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +8,7 @@ metadata:
   labels:
     app: backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: backend
@@ -28,27 +29,71 @@ spec:
             - containerPort: 3001
               name: http
           env:
+            # Application Configuration
             - name: PORT
               value: "3001"
+            - name: NODE_ENV
+              value: "production"
+            
+            # Database Configuration - Explicit mapping from secrets
             - name: DB_HOST
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_HOST
             - name: DB_PORT
-              value: "5432"
-          envFrom:
-            - secretRef:
-                name: backend-secrets
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_PORT
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_NAME
+            
+            # SSL Configuration for Azure PostgreSQL
+            - name: PGSSLMODE
+              value: "require"
+            - name: PGSSL
+              value: "true"
+            
+            # Connection Pool Configuration
+            - name: DB_POOL_MAX
+              value: "20"
+            - name: DB_POOL_MIN
+              value: "2"
+            - name: DB_CONNECTION_TIMEOUT
+              value: "5000"
+            - name: DB_IDLE_TIMEOUT
+              value: "30000"
+              
           readinessProbe:
             httpGet:
               path: /health
               port: 3001
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15    # Increased for database connection time
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /health
               port: 3001
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30    # Increased for database connection time
             periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: "100m"
@@ -56,6 +101,7 @@ spec:
             limits:
               cpu: "300m"
               memory: "256Mi"
+
 ---
 # backend-service.yaml
 apiVersion: v1
@@ -63,6 +109,8 @@ kind: Service
 metadata:
   name: backend
   namespace: memory-game
+  labels:
+    app: backend
 spec:
   ports:
     - port: 80
@@ -98,3 +146,65 @@ spec:
       target:
         type: Utilization
         averageUtilization: 80
+
+
+
+# # backend-deployment.yaml
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: backend
+#   namespace: memory-game
+#   labels:
+#     app: backend
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: backend
+#   template:
+#     metadata:
+#       labels:
+#         app: backend
+#       annotations:
+#         prometheus.io/scrape: "true"
+#         prometheus.io/path: "/metrics"
+#         prometheus.io/port: "3001"
+#     spec:
+#       containers:
+#         - name: backend
+#           image: appacr94.azurecr.io/memory-game-backend:latest
+#           imagePullPolicy: IfNotPresent
+#           ports:
+#             - containerPort: 3001
+#               name: http
+#           env:
+#             - name: PORT
+#               value: "3001"
+#             - name: DB_HOST
+#               value: "postgres"
+#             - name: DB_PORT
+#               value: "5432"
+#           envFrom:
+#             - secretRef:
+#                 name: backend-secrets
+#           readinessProbe:
+#             httpGet:
+#               path: /health
+#               port: 3001
+#             initialDelaySeconds: 5
+#             periodSeconds: 10
+#           livenessProbe:
+#             httpGet:
+#               path: /health
+#               port: 3001
+#             initialDelaySeconds: 15
+#             periodSeconds: 20
+#           resources:
+#             requests:
+#               cpu: "100m"
+#               memory: "128Mi"
+#             limits:
+#               cpu: "300m"
+#               memory: "256Mi"
+

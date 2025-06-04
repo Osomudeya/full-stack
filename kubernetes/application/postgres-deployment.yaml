@@ -1,110 +1,110 @@
-# postgres-deployment.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: memory-game
----
-# postgres-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgres-config
-  namespace: memory-game
-data:
-  schema.sql: |
-    CREATE TABLE IF NOT EXISTS scores (
-      id SERIAL PRIMARY KEY,
-      player_name VARCHAR(100) NOT NULL,
-      score INTEGER NOT NULL,
-      time INTEGER,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+# # postgres-deployment.yaml
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: memory-game
+# ---
+# # postgres-config.yaml
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: postgres-config
+#   namespace: memory-game
+# data:
+#   schema.sql: |
+#     CREATE TABLE IF NOT EXISTS scores (
+#       id SERIAL PRIMARY KEY,
+#       player_name VARCHAR(100) NOT NULL,
+#       score INTEGER NOT NULL,
+#       time INTEGER,
+#       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+#     );
 
-    CREATE INDEX IF NOT EXISTS idx_scores_score ON scores(score DESC);
+#     CREATE INDEX IF NOT EXISTS idx_scores_score ON scores(score DESC);
 
-    INSERT INTO scores (player_name, score, time)
-    VALUES 
-      ('Player1', 100, 60),
-      ('Player2', 90, 70),
-      ('Player3', 85, 75)
-    ON CONFLICT DO NOTHING;
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-  namespace: memory-game
-spec:
-  selector:
-    matchLabels:
-      app: postgres
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-        - name: postgres
-          image: postgres:14-alpine
-          ports:
-            - containerPort: 5432
-          envFrom:
-            - secretRef:
-                name: postgres-secrets
-          volumeMounts:
-            - name: postgres-storage
-              mountPath: /var/lib/postgresql/data
-            - name: postgres-init
-              mountPath: /docker-entrypoint-initdb.d
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          readinessProbe:        
-            tcpSocket:
-              port: 5432
-            initialDelaySeconds: 10
-            periodSeconds: 10
-      volumes:
-        - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: postgres-pvc
-        - name: postgres-init
-          configMap:
-            name: postgres-config
-            items:
-              - key: schema.sql
-                path: schema.sql
----
-# postgres-pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: memory-game
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: managed-premium
----
-# postgres-service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  namespace: memory-game
-spec:
-  ports:
-    - port: 5432
-      targetPort: 5432
-  selector:
-    app: postgres
-  type: ClusterIP
+#     INSERT INTO scores (player_name, score, time)
+#     VALUES 
+#       ('Player1', 100, 60),
+#       ('Player2', 90, 70),
+#       ('Player3', 85, 75)
+#     ON CONFLICT DO NOTHING;
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: postgres
+#   namespace: memory-game
+# spec:
+#   selector:
+#     matchLabels:
+#       app: postgres
+#   strategy:
+#     type: Recreate
+#   template:
+#     metadata:
+#       labels:
+#         app: postgres
+#     spec:
+#       containers:
+#         - name: postgres
+#           image: postgres:14-alpine
+#           ports:
+#             - containerPort: 5432
+#           envFrom:
+#             - secretRef:
+#                 name: postgres-secrets
+#           volumeMounts:
+#             - name: postgres-storage
+#               mountPath: /var/lib/postgresql/data
+#             - name: postgres-init
+#               mountPath: /docker-entrypoint-initdb.d
+#           resources:
+#             requests:
+#               cpu: "100m"
+#               memory: "256Mi"
+#             limits:
+#               cpu: "500m"
+#               memory: "512Mi"
+#           readinessProbe:        
+#             tcpSocket:
+#               port: 5432
+#             initialDelaySeconds: 10
+#             periodSeconds: 10
+#       volumes:
+#         - name: postgres-storage
+#           persistentVolumeClaim:
+#             claimName: postgres-pvc
+#         - name: postgres-init
+#           configMap:
+#             name: postgres-config
+#             items:
+#               - key: schema.sql
+#                 path: schema.sql
+# ---
+# # postgres-pvc.yaml
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: postgres-pvc
+#   namespace: memory-game
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+#   storageClassName: managed-premium
+# ---
+# # postgres-service.yaml
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: postgres
+#   namespace: memory-game
+# spec:
+#   ports:
+#     - port: 5432
+#       targetPort: 5432
+#   selector:
+#     app: postgres
+#   type: ClusterIP
