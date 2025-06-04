@@ -77,6 +77,13 @@ jobs:
         docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         echo "✅ Frontend image pushed successfully"
 
+      # Add image scanning step
+    - name: Scan Images for Vulnerabilities
+      run: |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        aquasec/trivy:latest image \
+        ${{ env.ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
     - name: Install SSH dependencies
       run: |
         sudo apt-get update

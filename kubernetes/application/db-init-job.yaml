@@ -1,65 +1,65 @@
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: db-init
-  namespace: memory-game
-spec:
-  template:
-    spec:
-      containers:
-      - name: db-init
-        image: postgres:14-alpine
-        envFrom:
-        - secretRef:
-            name: backend-secrets
-        env:
-        - name: PGUSER
-          valueFrom:
-            secretKeyRef:
-              name: backend-secrets
-              key: DB_USER
-        - name: PGPASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: backend-secrets
-              key: DB_PASSWORD
-        - name: PGHOST
-          valueFrom:
-            secretKeyRef:
-              name: backend-secrets
-              key: DB_HOST
-        - name: PGDATABASE
-          valueFrom:
-            secretKeyRef:
-              name: backend-secrets
-              key: DB_NAME
-        - name: PGSSLMODE
-          value: "require"
-        command:
-        - /bin/sh
-        - -c
-        - |
-          echo "Initializing database schema..."
-          psql -c "
-          CREATE TABLE IF NOT EXISTS scores (
-            id SERIAL PRIMARY KEY,
-            player_name VARCHAR(100) NOT NULL,
-            score INTEGER NOT NULL,
-            time INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: db-init
+#   namespace: memory-game
+# spec:
+#   template:
+#     spec:
+#       containers:
+#       - name: db-init
+#         image: postgres:14-alpine
+#         envFrom:
+#         - secretRef:
+#             name: backend-secrets
+#         env:
+#         - name: PGUSER
+#           valueFrom:
+#             secretKeyRef:
+#               name: backend-secrets
+#               key: DB_USER
+#         - name: PGPASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: backend-secrets
+#               key: DB_PASSWORD
+#         - name: PGHOST
+#           valueFrom:
+#             secretKeyRef:
+#               name: backend-secrets
+#               key: DB_HOST
+#         - name: PGDATABASE
+#           valueFrom:
+#             secretKeyRef:
+#               name: backend-secrets
+#               key: DB_NAME
+#         - name: PGSSLMODE
+#           value: "require"
+#         command:
+#         - /bin/sh
+#         - -c
+#         - |
+#           echo "Initializing database schema..."
+#           psql -c "
+#           CREATE TABLE IF NOT EXISTS scores (
+#             id SERIAL PRIMARY KEY,
+#             player_name VARCHAR(100) NOT NULL,
+#             score INTEGER NOT NULL,
+#             time INTEGER,
+#             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+#           );
           
-          CREATE INDEX IF NOT EXISTS idx_scores_score ON scores(score DESC);
+#           CREATE INDEX IF NOT EXISTS idx_scores_score ON scores(score DESC);
           
-          INSERT INTO scores (player_name, score, time)
-          VALUES 
-            ('Player1', 100, 60),
-            ('Player2', 90, 70),
-            ('Player3', 85, 75)
-          ON CONFLICT DO NOTHING;
-          " && echo "✅ Database schema created successfully!" || echo "⚠️ Schema creation failed"
-      restartPolicy: OnFailure
-  backoffLimit: 3
+#           INSERT INTO scores (player_name, score, time)
+#           VALUES 
+#             ('Player1', 100, 60),
+#             ('Player2', 90, 70),
+#             ('Player3', 85, 75)
+#           ON CONFLICT DO NOTHING;
+#           " && echo "✅ Database schema created successfully!" || echo "⚠️ Schema creation failed"
+#       restartPolicy: OnFailure
+#   backoffLimit: 3
 
 
 

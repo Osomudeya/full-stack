@@ -1,5 +1,5 @@
 const express = require('express');
-const { Pool } = require('pg');  // ← Only import once
+const { Pool } = require('pg'); 
 const cors = require('cors');
 const promClient = require('prom-client');
 const morgan = require('morgan');
@@ -48,9 +48,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ❌ REMOVE: const { Pool } = require('pg'); // Duplicate import!
-
-// Database connection configuration
+// ✅ FIXED: Database connection configuration (removed duplicate import and module.exports)
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -64,8 +62,6 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000, // Increased timeout for Azure
 });
-
-// ❌ REMOVE: module.exports = pool; // This doesn't belong here!
 
 // Add connection error handling
 pool.on('error', (err, client) => {
