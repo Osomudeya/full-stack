@@ -1,173 +1,173 @@
-# # Save this as promtail.yaml
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: promtail
-#   namespace: monitoring
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRole
-# metadata:
-#   name: promtail
-# rules:
-# - apiGroups: [""]
-#   resources:
-#   - nodes
-#   - services
-#   - pods
-#   verbs:
-#   - get
-#   - watch
-#   - list
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRoleBinding
-# metadata:
-#   name: promtail
-# roleRef:
-#   apiGroup: rbac.authorization.k8s.io
-#   kind: ClusterRole
-#   name: promtail
-# subjects:
-# - kind: ServiceAccount
-#   name: promtail
-#   namespace: monitoring
-# ---
-# apiVersion: v1
-# kind: ConfigMap
-# metadata:
-#   name: promtail-config
-#   namespace: monitoring
-# data:
-#   promtail.yaml: |
-#     server:
-#       http_listen_port: 9080
+# Save this as promtail.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promtail
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promtail
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - services
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promtail
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promtail
+subjects:
+- kind: ServiceAccount
+  name: promtail
+  namespace: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: monitoring
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 9080
     
-#     positions:
-#       filename: /data/positions.yaml
+    positions:
+      filename: /data/positions.yaml
     
-#     clients:
-#       - url: http://loki:3100/loki/api/v1/push
-#         tenant_id: default
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+        tenant_id: default
     
-#     scrape_configs:
-#       - job_name: kubernetes-pods
-#         kubernetes_sd_configs:
-#           - role: pod
-#         pipeline_stages:
-#           - docker: {}
-#         relabel_configs:
-#           - source_labels:
-#               - __meta_kubernetes_pod_node_name
-#             target_label: __host__
-#           - action: labelmap
-#             regex: __meta_kubernetes_pod_label_(.+)
-#           - action: replace
-#             replacement: $1
-#             separator: /
-#             source_labels:
-#               - __meta_kubernetes_namespace
-#               - __meta_kubernetes_pod_name
-#             target_label: job
-#           - action: replace
-#             source_labels:
-#               - __meta_kubernetes_namespace
-#             target_label: namespace
-#           - action: replace
-#             source_labels:
-#               - __meta_kubernetes_pod_name
-#             target_label: pod
-#           - action: replace
-#             source_labels:
-#               - __meta_kubernetes_pod_container_name
-#             target_label: container
-#           - replacement: /var/log/pods/*$1/*.log
-#             separator: /
-#             source_labels:
-#               - __meta_kubernetes_pod_uid
-#               - __meta_kubernetes_pod_container_name
-#             target_label: __path__
-#           - source_labels:
-#               - __meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash
-#               - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
-#               - __meta_kubernetes_pod_container_name
-#             separator: /
-#             regex: true/(.+)/(.+)
-#             replacement: /var/log/pods/*$1/*$2/*.log
-#             target_label: __path__
-# ---
-# apiVersion: apps/v1
-# kind: DaemonSet
-# metadata:
-#   name: promtail
-#   namespace: monitoring
-# spec:
-#   selector:
-#     matchLabels:
-#       app: promtail
-#   template:
-#     metadata:
-#       labels:
-#         app: promtail
-#     spec:
-#       serviceAccountName: promtail
-#       tolerations:
-#         - key: node-role.kubernetes.io/master
-#           effect: NoSchedule
-#       containers:
-#         - name: promtail
-#           image: grafana/promtail:2.8.2
-#           args:
-#             - -config.file=/etc/promtail/promtail.yaml
-#             - -client.url=http://loki:3100/loki/api/v1/push
-#           securityContext:
-#             privileged: true
-#             runAsUser: 0
-#           volumeMounts:
-#             - name: config
-#               mountPath: /etc/promtail
-#             - name: run
-#               mountPath: /run/promtail
-#             - name: data
-#               mountPath: /data
-#             - name: varlog
-#               mountPath: /var/log
-#             - name: varlibdockercontainers
-#               mountPath: /var/lib/docker/containers
-#               readOnly: true
-#             - name: procmount
-#               mountPath: /host/proc
-#               readOnly: true
-#           env:
-#             - name: HOSTNAME
-#               valueFrom:
-#                 fieldRef:
-#                   fieldPath: spec.nodeName
-#           ports:
-#             - containerPort: 9080
-#               name: http
-#           readinessProbe:
-#             failureThreshold: 5
-#             httpGet:
-#               path: /ready
-#               port: http
-#             initialDelaySeconds: 10
-#             periodSeconds: 10
-#       volumes:
-#         - name: config
-#           configMap:
-#             name: promtail-config
-#         - name: run
-#           hostPath:
-#             path: /run/promtail
-#         - name: data
-#           emptyDir: {}
-#         - name: varlog
-#           hostPath:
-#             path: /var/log
-#         - name: varlibdockercontainers
-#           hostPath:
-#             path: /var/lib/docker/containers
-#         - name: procmount
-#           hostPath:
-#             path: /proc
+    scrape_configs:
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        pipeline_stages:
+          - docker: {}
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_pod_node_name
+            target_label: __host__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_name
+            target_label: job
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_container_name
+            target_label: container
+          - replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+          - source_labels:
+              - __meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash
+              - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
+              - __meta_kubernetes_pod_container_name
+            separator: /
+            regex: true/(.+)/(.+)
+            replacement: /var/log/pods/*$1/*$2/*.log
+            target_label: __path__
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: promtail
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      serviceAccountName: promtail
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+        - name: promtail
+          image: grafana/promtail:2.8.2
+          args:
+            - -config.file=/etc/promtail/promtail.yaml
+            - -client.url=http://loki:3100/loki/api/v1/push
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail
+            - name: run
+              mountPath: /run/promtail
+            - name: data
+              mountPath: /data
+            - name: varlog
+              mountPath: /var/log
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: procmount
+              mountPath: /host/proc
+              readOnly: true
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 9080
+              name: http
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: promtail-config
+        - name: run
+          hostPath:
+            path: /run/promtail
+        - name: data
+          emptyDir: {}
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: procmount
+          hostPath:
+            path: /proc

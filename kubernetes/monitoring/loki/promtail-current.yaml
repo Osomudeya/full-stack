@@ -1,112 +1,112 @@
-# apiVersion: apps/v1
-# kind: DaemonSet
-# metadata:
-#   annotations:
-#     deprecated.daemonset.template.generation: "1"
-#     kubectl.kubernetes.io/last-applied-configuration: |
-#       {"apiVersion":"apps/v1","kind":"DaemonSet","metadata":{"annotations":{},"labels":{"app":"promtail"},"name":"promtail","namespace":"monitoring"},"spec":{"selector":{"matchLabels":{"app":"promtail"}},"template":{"metadata":{"labels":{"app":"promtail"}},"spec":{"containers":[{"args":["-config.file=/etc/promtail/promtail-config.yaml"],"env":[{"name":"HOSTNAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"image":"grafana/promtail:2.8.2","imagePullPolicy":"IfNotPresent","name":"promtail","ports":[{"containerPort":9080,"name":"http"}],"readinessProbe":{"httpGet":{"path":"/ready","port":"http"},"initialDelaySeconds":10},"resources":{"limits":{"cpu":"100m","memory":"256Mi"},"requests":{"cpu":"50m","memory":"128Mi"}},"securityContext":{"readOnlyRootFilesystem":true,"runAsUser":0},"volumeMounts":[{"mountPath":"/etc/promtail","name":"config"},{"mountPath":"/run/promtail","name":"run"},{"mountPath":"/var/log/pods","name":"pods","readOnly":true},{"mountPath":"/var/lib/docker/containers","name":"containers","readOnly":true}]}],"serviceAccountName":"promtail","volumes":[{"configMap":{"name":"promtail-config"},"name":"config"},{"hostPath":{"path":"/run/promtail"},"name":"run"},{"hostPath":{"path":"/var/log/pods"},"name":"pods"},{"hostPath":{"path":"/var/lib/docker/containers"},"name":"containers"}]}}}}
-#   creationTimestamp: "2025-04-15T00:39:36Z"
-#   generation: 1
-#   labels:
-#     app: promtail
-#   name: promtail
-#   namespace: monitoring
-#   resourceVersion: "9187"
-#   uid: 2f743b8a-9321-4ab3-90ee-4dd9daedfc56
-# spec:
-#   revisionHistoryLimit: 10
-#   selector:
-#     matchLabels:
-#       app: promtail
-#   template:
-#     metadata:
-#       creationTimestamp: null
-#       labels:
-#         app: promtail
-#     spec:
-#       containers:
-#       - args:
-#         - -config.file=/etc/promtail/promtail-config.yaml
-#         env:
-#         - name: HOSTNAME
-#           valueFrom:
-#             fieldRef:
-#               apiVersion: v1
-#               fieldPath: spec.nodeName
-#         image: grafana/promtail:2.8.2
-#         imagePullPolicy: IfNotPresent
-#         name: promtail
-#         ports:
-#         - containerPort: 9080
-#           name: http
-#           protocol: TCP
-#         readinessProbe:
-#           failureThreshold: 3
-#           httpGet:
-#             path: /ready
-#             port: http
-#             scheme: HTTP
-#           initialDelaySeconds: 10
-#           periodSeconds: 10
-#           successThreshold: 1
-#           timeoutSeconds: 1
-#         resources:
-#           limits:
-#             cpu: 100m
-#             memory: 256Mi
-#           requests:
-#             cpu: 50m
-#             memory: 128Mi
-#         securityContext:
-#           readOnlyRootFilesystem: true
-#           runAsUser: 0
-#         terminationMessagePath: /dev/termination-log
-#         terminationMessagePolicy: File
-#         volumeMounts:
-#         - mountPath: /etc/promtail
-#           name: config
-#         - mountPath: /run/promtail
-#           name: run
-#         - mountPath: /var/log/pods
-#           name: pods
-#           readOnly: true
-#         - mountPath: /var/lib/docker/containers
-#           name: containers
-#           readOnly: true
-#       dnsPolicy: ClusterFirst
-#       restartPolicy: Always
-#       schedulerName: default-scheduler
-#       securityContext: {}
-#       serviceAccount: promtail
-#       serviceAccountName: promtail
-#       terminationGracePeriodSeconds: 30
-#       volumes:
-#       - configMap:
-#           defaultMode: 420
-#           name: promtail-config
-#         name: config
-#       - hostPath:
-#           path: /run/promtail
-#           type: ""
-#         name: run
-#       - hostPath:
-#           path: /var/log/pods
-#           type: ""
-#         name: pods
-#       - hostPath:
-#           path: /var/lib/docker/containers
-#           type: ""
-#         name: containers
-#   updateStrategy:
-#     rollingUpdate:
-#       maxSurge: 0
-#       maxUnavailable: 1
-#     type: RollingUpdate
-# status:
-#   currentNumberScheduled: 1
-#   desiredNumberScheduled: 1
-#   numberAvailable: 1
-#   numberMisscheduled: 0
-#   numberReady: 1
-#   observedGeneration: 1
-#   updatedNumberScheduled: 1
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    deprecated.daemonset.template.generation: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"DaemonSet","metadata":{"annotations":{},"labels":{"app":"promtail"},"name":"promtail","namespace":"monitoring"},"spec":{"selector":{"matchLabels":{"app":"promtail"}},"template":{"metadata":{"labels":{"app":"promtail"}},"spec":{"containers":[{"args":["-config.file=/etc/promtail/promtail-config.yaml"],"env":[{"name":"HOSTNAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"image":"grafana/promtail:2.8.2","imagePullPolicy":"IfNotPresent","name":"promtail","ports":[{"containerPort":9080,"name":"http"}],"readinessProbe":{"httpGet":{"path":"/ready","port":"http"},"initialDelaySeconds":10},"resources":{"limits":{"cpu":"100m","memory":"256Mi"},"requests":{"cpu":"50m","memory":"128Mi"}},"securityContext":{"readOnlyRootFilesystem":true,"runAsUser":0},"volumeMounts":[{"mountPath":"/etc/promtail","name":"config"},{"mountPath":"/run/promtail","name":"run"},{"mountPath":"/var/log/pods","name":"pods","readOnly":true},{"mountPath":"/var/lib/docker/containers","name":"containers","readOnly":true}]}],"serviceAccountName":"promtail","volumes":[{"configMap":{"name":"promtail-config"},"name":"config"},{"hostPath":{"path":"/run/promtail"},"name":"run"},{"hostPath":{"path":"/var/log/pods"},"name":"pods"},{"hostPath":{"path":"/var/lib/docker/containers"},"name":"containers"}]}}}}
+  creationTimestamp: "2025-04-15T00:39:36Z"
+  generation: 1
+  labels:
+    app: promtail
+  name: promtail
+  namespace: monitoring
+  resourceVersion: "9187"
+  uid: 2f743b8a-9321-4ab3-90ee-4dd9daedfc56
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: promtail
+    spec:
+      containers:
+      - args:
+        - -config.file=/etc/promtail/promtail-config.yaml
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: grafana/promtail:2.8.2
+        imagePullPolicy: IfNotPresent
+        name: promtail
+        ports:
+        - containerPort: 9080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/promtail
+          name: config
+        - mountPath: /run/promtail
+          name: run
+        - mountPath: /var/log/pods
+          name: pods
+          readOnly: true
+        - mountPath: /var/lib/docker/containers
+          name: containers
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: promtail
+      serviceAccountName: promtail
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: promtail-config
+        name: config
+      - hostPath:
+          path: /run/promtail
+          type: ""
+        name: run
+      - hostPath:
+          path: /var/log/pods
+          type: ""
+        name: pods
+      - hostPath:
+          path: /var/lib/docker/containers
+          type: ""
+        name: containers
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+status:
+  currentNumberScheduled: 1
+  desiredNumberScheduled: 1
+  numberAvailable: 1
+  numberMisscheduled: 0
+  numberReady: 1
+  observedGeneration: 1
+  updatedNumberScheduled: 1

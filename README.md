@@ -60,8 +60,8 @@ All components are containerized, Kubernetes-ready, and monitored!
 ## 🧪 Local Development
 ```bash
 # Clone repo
-git clone https://github.com/Osomudeya/full-stack.git
-cd full-stack/application
+git clone https://github.com/yourusername/memory-game-k8s-monitoring.git
+cd memory-game-k8s-monitoring/application
 
 # Run Docker Compose
 docker-compose up -d

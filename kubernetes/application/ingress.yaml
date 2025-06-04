@@ -1,70 +1,93 @@
-# Save as k8s-manifests/ingress.yaml
+# kubernetes/application/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: retoucherirving-ingress
+  namespace: memory-game
   annotations:
-    kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "10254"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
-    - retoucherirving.com
-    - www.retoucherirving.com
+      - retoucherirving.com
+      - www.retoucherirving.com
     secretName: retoucherirving-tls
   rules:
   - host: retoucherirving.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: your-frontend-service
-            port:
-              number: 80
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
+              name: backend
+              port:
+                number: 80
   - host: www.retoucherirving.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: your-frontend-service
-            port:
-              number: 80
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+        - path: /api 
+          pathType: Prefix
+          backend:
+            service:
+              name: backend
+              port:
+                number: 80
 
 
-
+# # ingress.yaml
 # apiVersion: networking.k8s.io/v1
 # kind: Ingress
 # metadata:
-#   name: memory-game-ingress
+#   name: retoucherirving-ingress
 #   namespace: memory-game
 #   annotations:
-#     kubernetes.io/ingress.class: "azure/application-gateway"  # Use AKS Application Gateway Ingress Controller
-#     appgw.ingress.kubernetes.io/ssl-redirect: "true"
-#     appgw.ingress.kubernetes.io/use-private-ip: "false"
+#     kubernetes.io/ingress.class: nginx
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+#     nginx.ingress.kubernetes.io/rewrite-target: /
 #     prometheus.io/scrape: "true"
 #     prometheus.io/port: "10254"
 # spec:
+#   tls:
+#   - hosts:
+#       - retoucherirving.com
+#       - www.retoucherirving.com
+#     secretName: retoucherirving-tls
 #   rules:
-#     - host: memory-game.yourdomain.com
-#       http:
-#         paths:
-#           - path: /api
-#             pathType: Prefix
-#             backend:
-#               service:
-#                 name: backend
-#                 port:
-#                   number: 80
-#           - path: /
-#             pathType: Prefix
-#             backend:
-#               service:
-#                 name: frontend
-#                 port:
-#                   number: 80
+#   - host: retoucherirving.com
+#     http:
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#           backend:
+#             service:
+#               name: frontend
+#               port:
+#                 number: 80
+#   - host: www.retoucherirving.com
+#     http:
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#           backend:
+#             service:
+#               name: frontend
+#               port:
+#                 number: 80
