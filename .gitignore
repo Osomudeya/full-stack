@@ -1,2 +1,6 @@
 .github/scripts/run-deploy-2.sh
 README-2.md
+scripts/
+helm-aks-monitoring/
+helm-file/
+helm-local/
